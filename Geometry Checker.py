@@ -1,6 +1,3 @@
-### to run this: streamlit run 'C:\Users\dwatkins\OneDrive - Jhpiego\Documents\GitHub\Geometry-Checker\Geometry Checker.py' --server.enableXsrfProtection=false
-
-
 import streamlit as st
 import pandas as pd
 import geopandas as gpd
@@ -24,7 +21,7 @@ with st.expander("**About this tool**", expanded=True):
 col1, col2 = st.columns(2)
 
 with col1:
-    country_df = pd.read_csv('https://raw.githubusercontent.com/danielswatkins/hello-world/main/Country-ISO%20List.csv')
+    country_df = pd.read_csv('https://raw.githubusercontent.com/danielswatkins/Geometry-Checker/main/Country-ISO%20List.csv')
     st.markdown('### Select your country:')
     country_select = st.selectbox(label="country", options=country_df['Country'], label_visibility="hidden")
 
