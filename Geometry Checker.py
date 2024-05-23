@@ -23,7 +23,7 @@ col1, col2 = st.columns(2)
 with col1:
     country_df = pd.read_csv('https://raw.githubusercontent.com/danielswatkins/Geometry-Checker/main/Country-ISO%20List.csv')
     st.markdown('### Select your country:')
-    country_select = st.selectbox(label="country", options=country_df['Country'], label_visibility="hidden")
+    country_select = st.selectbox(label="country", options=country_df['Country'], label_visibility="hidden", index=None)
 
 if country_select:
     selected_row = country_df.loc[country_df['Country'] == country_select]
@@ -45,82 +45,106 @@ uploaded_sites = st.file_uploader(label='Data File', type=['csv', 'xls', 'xlsx']
                                       label_visibility="hidden")
 
 if uploaded_sites:
-        st.markdown(">*Optional:* If you need to make any changes to your data, you can edit values directly in the table below. Take care to not make changes unless intended. For multiple changes, it is advisable to go back and edit the original file.")
-        df = pd.read_excel(uploaded_sites)
-        edited = st.data_editor(df, height=250)
+    st.markdown(">*Optional:* If you need to make any changes to your data, you can edit values directly in the table below. Take care to not make changes unless intended. For multiple changes, it is advisable to go back and edit the original file.")
+    df = pd.read_excel(uploaded_sites)
 
-        st.markdown("### Check your data:")
+    edited = st.data_editor(df, height=250)
 
-        with st.form("Select the corresponding columns:"):
-            st.markdown("#### Select the corresponding columns:")
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                sitename_field_selection = st.selectbox("Site Name or ID ", edited.columns, key="sitename", index=None)
-            with col2:
-                latitude_field_selection = st.selectbox("Latitude Value (Y):", edited.columns, key="lat_entered", index=None)
-            with col3:
-                longitude_field_selection = st.selectbox("Longitude Value (X)", edited.columns, key="long_entered", index=None)
+    st.markdown("### Check your data:")
 
-            submitted = st.form_submit_button("Perform Data Quality Check")
-            if submitted:
+    with st.form("Select the corresponding columns:"):
+        st.markdown("#### Select the corresponding columns:")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            sitename_field_selection = st.selectbox("Site Name or ID ", edited.columns, key="sitename", index=None)
+        with col2:
+            latitude_field_selection = st.selectbox("Latitude Value (Y):", edited.columns, key="lat_entered", index=None)
+        with col3:
+            longitude_field_selection = st.selectbox("Longitude Value (X)", edited.columns, key="long_entered", index=None)
 
-                edited['Name'] = edited[sitename_field_selection]
-                edited['lat'] = edited[latitude_field_selection]
-                edited['lon'] = edited[longitude_field_selection]
+    # Check for missing values and display the warning before the submit button
+        edited = edited.rename(columns={
+            sitename_field_selection: 'Name',
+            latitude_field_selection: 'lat',
+            longitude_field_selection: 'lon'
+        })
+        missing_values = edited['lat'].isna().sum()
+        if missing_values.any():
+            st.warning(f"**Warning**: A total of **{missing_values.sum()}** site(s) in the uploaded file are missing coordinates.")
 
-                sites_df = edited[['Name', 'lat', 'lon']]
-                sites_gdf = gpd.GeoDataFrame(sites_df, geometry=gpd.points_from_xy(sites_df.lon, sites_df.lat),
-                                     crs="EPSG:4326")
-                sites_gdf['geometry'] = sites_gdf['geometry'].apply(lambda geom: json.dumps(geom.__geo_interface__))  # Convert geometry to GeoJSON
+        submitted = st.form_submit_button("Perform Data Quality Check")
 
-                ### Applying geometry checks!
-                st.markdown("#### Data Quality Check Results")
+        if submitted:
+            edited['Name'] = edited['Name']
+            edited['lat'] = edited['lat']
+            edited['lon'] = edited['lon']
 
-                def check_sites_within_country(country_gdf, sites_gdf):
-                    country_geometries = [shape(json.loads(geom)) for geom in country_gdf['geometry'].to_list()]
-                    country_geometry = gpd.GeoSeries(country_geometries)
-                    sites_gdf['Within Country?'] = sites_gdf.geometry.apply(lambda geom: shape(json.loads(geom)).within(country_geometry.unary_union))
-                    return sites_gdf
+            sites_df = edited[['Name', 'lat', 'lon']]
+            sites_gdf = gpd.GeoDataFrame(sites_df, geometry=gpd.points_from_xy(sites_df.lon, sites_df.lat), crs="EPSG:4326")
+            sites_gdf = sites_gdf[sites_gdf['geometry'].notnull()]  # Remove rows with missing geometries
+            sites_gdf['geometry'] = sites_gdf['geometry'].apply(lambda geom: json.dumps(geom.__geo_interface__) if geom else None)
 
-                country_check_result = check_sites_within_country(country_gdf, sites_gdf)
-                country_check_result['Unique?'] = ~country_check_result['geometry'].duplicated(keep=False)
+            ### Applying geometry checks!
+            st.markdown("#### Data Quality Check Results")
+
+            def check_sites_within_country(country_gdf, sites_gdf):
+                country_geometries = [shape(json.loads(geom)) for geom in country_gdf['geometry'].to_list() if geom] # Skip None values
+                country_geometry = gpd.GeoSeries(country_geometries)
+                sites_gdf['Within Country?'] = sites_gdf['geometry'].apply(lambda geom: shape(json.loads(geom)).within(country_geometry.unary_union) if geom else False)
+                return sites_gdf
+
+            country_check_result = check_sites_within_country(country_gdf, sites_gdf)
+            country_check_result['Unique?'] = ~country_check_result['geometry'].duplicated(keep=False)
 
                 ### specific values for precision
-                decimal_categories = {range(0, 4): "Too Low", 4: "OK", range(5, 1000): "High",}
-                country_check_result['Precision (Lat)'] = country_check_result['lat'].apply(lambda x: next((v for k, v in decimal_categories.items() if (isinstance(k, int) and len(str(x).split('.')[1]) == k) or
-                                                          (isinstance(k, range) and len(str(x).split('.')[1]) in k)), None))
-                country_check_result['Precision (Long)'] = country_check_result['lon'].apply(lambda x: next((v for k, v in decimal_categories.items() if (isinstance(k, int) and len(str(x).split('.')[1]) == k) or
-                                                          (isinstance(k, range) and len(str(x).split('.')[1]) in k)), None))
+            decimal_categories = {range(0, 4): "Too Low", 4: "OK", range(5, 1000): "High",}
+            def calculate_precision(value):
+                if pd.notnull(value):
+                    try:
+                        precision = len(str(value).split('.')[1])
+                        return next((v for k, v in decimal_categories.items() if (isinstance(k, int) and precision == k) or
+                         (isinstance(k, range) and precision in k)), None)
+                    except (IndexError, ValueError):
+                        return None
+                else:
+                    return None
+
+            country_check_result['Has Coordinates?'] = (country_check_result['lat'].notna() | country_check_result['lon'].notna())
+            country_check_result['Precision (Lat)'] = country_check_result['lat'].apply(calculate_precision)
+            country_check_result['Precision (Long)'] = country_check_result['lon'].apply(calculate_precision)
 
     ### specific values for percentages
-                perc_within_country = round((country_check_result['Within Country?'].sum() / len(country_check_result['Within Country?'])) * 100, 2)
-                perc_unique = round((country_check_result['Unique?'].sum() / len(country_check_result['Unique?'])) * 100, 2)
-                high_count = ((country_check_result['Precision (Lat)'] == 'High') & (country_check_result['Precision (Long)'] == 'High')).sum()
-                perc_precise = round(high_count / len(country_check_result['Name']) *100, 2)
+            perc_within_country = round((country_check_result['Within Country?'].sum() / len(country_check_result['Within Country?'])) * 100, 2)
+            perc_unique = round((country_check_result['Unique?'].sum() / len(country_check_result['Unique?'])) * 100, 2)
+            perc_coordinates = round((country_check_result['Has Coordinates?'].sum() / len(country_check_result['Has Coordinates?'])) * 100, 2)
+            high_count = ((country_check_result['Precision (Lat)'] == 'High') & (country_check_result['Precision (Long)'] == 'High')).sum()
+            perc_precise = round(high_count / len(country_check_result['Name']) *100, 2)
     
     ### outputs on tabs
-                tab1, tab2 = st.tabs(["Summary", "Full Results by Site"])
-                with tab1:
+            tab1, tab2 = st.tabs(["Summary", "Full Results by Site"])
+            with tab1:
                     col1, col2, col3, col4 = st.columns(4)
                     with col1:
-                        st.metric(label=f"Sites are in {selected_country}", 
+                         st.metric(label="Sites have coordinates",
+                                   value=f"{perc_coordinates}%",
+                                   delta=f"{(country_check_result['Has Coordinates?'].sum())} / {len(country_check_result['Has Coordinates?'])} sites total", delta_color="off")
+                    
+                    with col2:
+                        st.metric(label=f"Sites are in **{selected_country}**", 
                                 value=f"{perc_within_country}%", 
                                 delta=f"{(country_check_result['Within Country?'].sum())} / {len(country_check_result['Within Country?'])} sites total", delta_color="off")
-                    with col2:
+                    with col3:
                         st.metric(label="Sites are unique", 
                                 value=f"{perc_unique}%", 
                                 delta=f"{(country_check_result['Unique?'].sum())} / {len(country_check_result['Unique?'])} sites total", delta_color="off")
-                    with col3:
+                    with col4:
                         st.metric(label="High precision coordinates", 
                                 value=f"{perc_precise}%", 
                                 delta=f"{high_count} / {len(country_check_result['Unique?'])} sites total", delta_color="off")
 
-                with tab2:
+            with tab2:
                     st.write("##### Full results by site:")
-                    st.dataframe(country_check_result[['Name','Within Country?', 'Unique?', 'Precision (Lat)', 'Precision (Long)']])
-
-
-                st.map(country_check_result)
+                    st.dataframe(country_check_result[['Name', 'Has Coordinates?', 'Within Country?', 'Unique?', 'Precision (Lat)', 'Precision (Long)']])
 
 with st.expander("**How does this work?**"):
      st.write(f'''This webapp uses a series of automated processes to perform the following data quality checks on each site listed in the table:  
