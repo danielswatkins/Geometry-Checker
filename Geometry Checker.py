@@ -69,7 +69,7 @@ if uploaded_sites:
             longitude_field_selection: 'lon'
         })
         missing_values = edited['lat'].isna().sum()
-        if missing_values.any():
+        if missing_values > 0:
             st.warning(f"**Warning**: A total of **{missing_values.sum()}** site(s) in the uploaded file are missing coordinates.")
 
         submitted = st.form_submit_button("Perform Data Quality Check")
