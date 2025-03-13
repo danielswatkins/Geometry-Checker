@@ -20,7 +20,7 @@ with st.expander("**About this tool**", expanded=True):
 ### Country selector
 
 with st.expander("**What kind of a file can I use?**", expanded=True):
-    st.markdown('''
+    st.write('''
                 You can upload any CSV or Excel file containing health facility location data that is structured as follows:
                  •  Has one row per health facility, beginning in the first row below column headers.
                  •  Has separate columns for the facility name, latitude, longitude, and country. Note: do not worry about precise naming - you'll be able to identify the appropriate columns in the steps below.
