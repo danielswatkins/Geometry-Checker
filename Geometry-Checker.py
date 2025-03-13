@@ -26,7 +26,7 @@ with st.expander("**What kind of a file can I use?**", expanded=False):
                       To request a template, please contact danielswatkins@gmail.com, or use the template below:
                 ''')
     with open('test-file.csv') as f:
-       st.download_button('Download CSV', f)  
+       st.download_button('Download CSV', mime='csv', f)  
 
 ### Country selector
 
