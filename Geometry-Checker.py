@@ -26,7 +26,7 @@ with st.expander("**What kind of a file can I use?**", expanded=False):
                       To request a template, please contact danielswatkins@gmail.com, or use the template below:
                 ''')
     test_data = pd.read_csv('https://raw.githubusercontent.com/danielswatkins/Geometry-Checker/main/test-file.csv')
-    st.download_button(label='Download CSV', data=test_data)  
+    st.download_button(label="Download CSV", data=test_data)  
 
 ### Country selector
 
