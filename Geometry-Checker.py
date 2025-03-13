@@ -19,21 +19,12 @@ with st.expander("**About this tool**", expanded=True):
 
 ### Country selector
 
-with st.expander("**What kind of a file can I use?**", expanded=True):
-    st.write('''
-                You can upload any CSV or Excel file containing health facility location data that is structured as follows:
-                 •  Has one row per health facility, beginning in the first row below column headers.
-                 •  Has separate columns for the facility name, latitude, longitude, and country. Note: do not worry about precise naming - you'll be able to identify the appropriate columns in the steps below.
-                 •  Uses a decimal type for the latitude and longitude fields.
-                 To request a template, please contact danielswatkins@gmail.com
-                ''')
-
 col1, col2 = st.columns(2)
 
 with col1:
     country_df = pd.read_csv('https://raw.githubusercontent.com/danielswatkins/Geometry-Checker/main/Country-ISO%20List.csv')
     st.markdown('### Select your country:')
-    country_select = st.selectbox(label="country", options=country_df['Country'], label_visibility="hidden", index=None)
+    country_select = st.selectbox(label="country", options=country_df['Country'], label_visibility="hidden", index=None
 
 if country_select:
     selected_row = country_df.loc[country_df['Country'] == country_select]
@@ -53,6 +44,16 @@ st.markdown("### Upload your file:")
 uploaded_sites = st.file_uploader(label='Data File', type=['csv', 'xls', 'xlsx'],
                                       help="Upload a CSV or Excel file containing your sites. This should be the same file shared with USAID",
                                       label_visibility="hidden")
+
+with st.expander("**What kind of a file can I use?**", expanded=True):
+    st.write('''
+                You can upload any CSV or Excel file containing health facility location data that is structured as follows:  
+                      • Has one row per health facility, beginning in the first row below column headers.  
+                      • Has separate columns for the facility name, latitude, longitude, and country. Note: do not worry about precise naming - you'll be able to identify the appropriate columns in the steps below.  
+                      • Uses a decimal type for the latitude and longitude fields.  
+                      To request a template, please contact danielswatkins@gmail.com
+                ''')
+
 
 if uploaded_sites:
     st.markdown(">*Optional:* If you need to make any changes to your data, you can edit values directly in the table below. Take care to not make changes unless intended. For multiple changes, it is advisable to go back and edit the original file.")
