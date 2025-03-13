@@ -25,7 +25,7 @@ with st.expander("**What kind of a file can I use?**", expanded=False):
                       • Uses a decimal type for the latitude and longitude fields.  
                       To request a template, please contact danielswatkins@gmail.com, or use the template below:
                 ''')
-    with open('test-file.csv') as f:
+    with open('https://raw.githubusercontent.com/danielswatkins/Geometry-Checker/main/test-file.csv') as f:
        st.download_button('Download CSV', f, mime='CSV')  
 
 ### Country selector
