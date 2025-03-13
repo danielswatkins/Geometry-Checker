@@ -85,15 +85,14 @@ with st.form("Select the corresponding columns:"):
     # Submit button must be the last element defined inside the form
     submitted = st.form_submit_button("Perform Data Quality Check")
 
-# Process the data AFTER the form, when submitted is True
-if submitted:
-    if sitename_field_selection and latitude_field_selection and longitude_field_selection:
-        # Rename columns for processing
-        edited = edited.rename(columns={
-            sitename_field_selection: 'Name',
-            latitude_field_selection: 'lat',
-            longitude_field_selection: 'lon'
-        })
+    if submitted:
+        if sitename_field_selection and latitude_field_selection and longitude_field_selection:
+            # Rename columns for processing
+            edited = edited.rename(columns={
+                sitename_field_selection: 'Name',
+                latitude_field_selection: 'lat',
+                longitude_field_selection: 'lon'
+            })
             sites_df = edited[['Name', 'lat', 'lon']]
             sites_gdf = gpd.GeoDataFrame(sites_df, geometry=gpd.points_from_xy(sites_df.lon, sites_df.lat), crs="EPSG:4326")
             sites_gdf = sites_gdf[sites_gdf['geometry'].notnull()]  # Remove rows with missing geometries
