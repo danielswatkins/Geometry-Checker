@@ -17,6 +17,15 @@ with st.expander("**About this tool**", expanded=True):
                 For more information, contact danielswatkins@gmail.com
                 ''')
 
+with st.expander("**What kind of a file can I use?**", expanded=False):
+    st.write('''
+                You can upload any CSV or Excel file containing health facility location data that is structured as follows:  
+                      • Has one row per health facility, beginning in the first row below column headers.  
+                      • Has separate columns for the facility name, latitude, longitude, and country. Note: do not worry about precise naming - you'll be able to identify the appropriate columns in the steps below.  
+                      • Uses a decimal type for the latitude and longitude fields.  
+                      To request a template, please contact danielswatkins@gmail.com
+                ''')
+
 ### Country selector
 
 col1, col2 = st.columns(2)
@@ -45,14 +54,6 @@ uploaded_sites = st.file_uploader(label='Data File', type=['csv', 'xls', 'xlsx']
                                       help="Upload a CSV or Excel file containing your sites. This should be the same file shared with USAID",
                                       label_visibility="hidden")
 
-with st.expander("**What kind of a file can I use?**", expanded=True):
-    st.write('''
-                You can upload any CSV or Excel file containing health facility location data that is structured as follows:  
-                      • Has one row per health facility, beginning in the first row below column headers.  
-                      • Has separate columns for the facility name, latitude, longitude, and country. Note: do not worry about precise naming - you'll be able to identify the appropriate columns in the steps below.  
-                      • Uses a decimal type for the latitude and longitude fields.  
-                      To request a template, please contact danielswatkins@gmail.com
-                ''')
 
 if uploaded_sites:
     st.markdown(">*Optional:* If you need to make any changes to your data, you can edit values directly in the table below. Take care to not make changes unless intended. For multiple changes, it is advisable to go back and edit the original file.")
