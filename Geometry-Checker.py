@@ -33,7 +33,7 @@ col1, col2 = st.columns(2)
 with col1:
     country_df = pd.read_csv('https://raw.githubusercontent.com/danielswatkins/Geometry-Checker/main/Country-ISO%20List.csv')
     st.markdown('### Select your country:')
-    country_select = st.selectbox(label="country", options=country_df['Country'], label_visibility="hidden", index=None
+    country_select = st.selectbox(label="country", options=country_df['Country'], label_visibility="hidden", index=None)
 
 if country_select:
     selected_row = country_df.loc[country_df['Country'] == country_select]
