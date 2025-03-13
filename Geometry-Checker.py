@@ -54,7 +54,6 @@ with st.expander("**What kind of a file can I use?**", expanded=True):
                       To request a template, please contact danielswatkins@gmail.com
                 ''')
 
-
 if uploaded_sites:
     st.markdown(">*Optional:* If you need to make any changes to your data, you can edit values directly in the table below. Take care to not make changes unless intended. For multiple changes, it is advisable to go back and edit the original file.")
     df = pd.read_excel(uploaded_sites)
