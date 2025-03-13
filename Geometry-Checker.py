@@ -75,14 +75,21 @@ if uploaded_sites:
             longitude_field_selection = st.selectbox("Longitude Value (X)", edited.columns, key="long_entered", index=None)
 
     # Check for missing values and display the warning before the submit button
+    if sitename_field_selection and latitude_field_selection and longitude_field_selection:
+        # Then rename the columns
         edited = edited.rename(columns={
             sitename_field_selection: 'Name',
             latitude_field_selection: 'lat',
             longitude_field_selection: 'lon'
         })
+        
+        # Now you can safely check for missing values
         missing_values = edited['lat'].isna().sum()
         if missing_values > 0:
-            st.warning(f"**Warning**: A total of **{missing_values.sum()}** site(s) in the uploaded file are missing coordinates.")
+            st.warning(f"**Warning**: A total of **{missing_values}** site(s) in the uploaded file are missing coordinates.")
+    else:
+        # If the user hasn't selected all required fields yet
+        st.info("Please select all the required columns to perform the data quality check.")
 
         submitted = st.form_submit_button("Perform Data Quality Check")
 
