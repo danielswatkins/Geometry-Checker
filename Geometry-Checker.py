@@ -23,8 +23,10 @@ with st.expander("**What kind of a file can I use?**", expanded=False):
                       • Has one row per health facility, beginning in the first row below column headers.  
                       • Has separate columns for the facility name, latitude, longitude, and country. Note: do not worry about precise naming - you'll be able to identify the appropriate columns in the steps below.  
                       • Uses a decimal type for the latitude and longitude fields.  
-                      To request a template, please contact danielswatkins@gmail.com
+                      To request a template, please contact danielswatkins@gmail.com, or use the template below:
                 ''')
+    with open('test-file.csv') as f:
+       st.download_button('Download CSV', f)  
 
 ### Country selector
 
