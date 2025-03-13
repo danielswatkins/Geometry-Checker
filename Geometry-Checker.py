@@ -64,40 +64,36 @@ if uploaded_sites:
 
     st.markdown("### Check your data:")
 
-    with st.form("Select the corresponding columns:"):
-        st.markdown("#### Select the corresponding columns:")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            sitename_field_selection = st.selectbox("Site Name or ID ", edited.columns, key="sitename", index=None)
-        with col2:
-            latitude_field_selection = st.selectbox("Latitude Value (Y):", edited.columns, key="lat_entered", index=None)
-        with col3:
-            longitude_field_selection = st.selectbox("Longitude Value (X)", edited.columns, key="long_entered", index=None)
+with st.form("Select the corresponding columns:"):
+    st.markdown("#### Select the corresponding columns:")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        sitename_field_selection = st.selectbox("Site Name or ID ", edited.columns, key="sitename", index=None)
+    with col2:
+        latitude_field_selection = st.selectbox("Latitude Value (Y):", edited.columns, key="lat_entered", index=None)
+    with col3:
+        longitude_field_selection = st.selectbox("Longitude Value (X)", edited.columns, key="long_entered", index=None)
 
-    # Check for missing values and display the warning before the submit button
+    # Place this check inside the form but before the submit button
+    # Don't rename or process data here, just check and show warnings
     if sitename_field_selection and latitude_field_selection and longitude_field_selection:
-        # Then rename the columns
+        # Check for missing values in the selected latitude column
+        missing_values = edited[latitude_field_selection].isna().sum()
+        if missing_values > 0:
+            st.warning(f"**Warning**: A total of **{missing_values}** site(s) in the uploaded file are missing coordinates.")
+    
+    # Submit button must be the last element defined inside the form
+    submitted = st.form_submit_button("Perform Data Quality Check")
+
+# Process the data AFTER the form, when submitted is True
+if submitted:
+    if sitename_field_selection and latitude_field_selection and longitude_field_selection:
+        # Rename columns for processing
         edited = edited.rename(columns={
             sitename_field_selection: 'Name',
             latitude_field_selection: 'lat',
             longitude_field_selection: 'lon'
         })
-        
-        # Now you can safely check for missing values
-        missing_values = edited['lat'].isna().sum()
-        if missing_values > 0:
-            st.warning(f"**Warning**: A total of **{missing_values}** site(s) in the uploaded file are missing coordinates.")
-    else:
-        # If the user hasn't selected all required fields yet
-        st.info("Please select all the required columns to perform the data quality check.")
-
-        submitted = st.form_submit_button("Perform Data Quality Check")
-
-        if submitted:
-            edited['Name'] = edited['Name']
-            edited['lat'] = edited['lat']
-            edited['lon'] = edited['lon']
-
             sites_df = edited[['Name', 'lat', 'lon']]
             sites_gdf = gpd.GeoDataFrame(sites_df, geometry=gpd.points_from_xy(sites_df.lon, sites_df.lat), crs="EPSG:4326")
             sites_gdf = sites_gdf[sites_gdf['geometry'].notnull()]  # Remove rows with missing geometries
