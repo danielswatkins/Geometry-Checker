@@ -5,7 +5,7 @@ from shapely.geometry import shape
 import json
 import requests
 
-### Title bit:
+### Title and explainers
 
 st.markdown("# :round_pushpin: :globe_with_meridians:")
 st.markdown("# Facility List Geometry Checker")
@@ -50,11 +50,11 @@ if country_select:
     country_gdf['geometry'] = country_gdf['geometry'].apply(lambda geom: json.dumps(geom.__geo_interface__))  # Convert geometry to GeoJSON
 
 ### Site list upload section
+
 st.markdown("### Upload your file:")
 uploaded_sites = st.file_uploader(label='Data File', type=['csv', 'xls', 'xlsx'],
                                       help="Upload a CSV or Excel file containing your sites. This should be the same file shared with USAID",
                                       label_visibility="hidden")
-
 
 if uploaded_sites:
     st.markdown(">*Optional:* If you need to make any changes to your data, you can edit values directly in the table below. Take care to not make changes unless intended. For multiple changes, it is advisable to go back and edit the original file.")
@@ -74,15 +74,14 @@ if uploaded_sites:
         with col3:
             longitude_field_selection = st.selectbox("Longitude Value (X)", edited.columns, key="long_entered", index=None)
     
-        # Place this check inside the form but before the submit button
-        # Don't rename or process data here, just check and show warnings
+        ### Check and show warnings
+        
         if sitename_field_selection and latitude_field_selection and longitude_field_selection:
             # Check for missing values in the selected latitude column
             missing_values = edited[latitude_field_selection].isna().sum()
             if missing_values > 0:
                 st.warning(f"**Warning**: A total of **{missing_values}** site(s) in the uploaded file are missing coordinates.")
         
-        # Submit button must be the last element defined inside the form
         submitted = st.form_submit_button("Perform Data Quality Check")
     
         if submitted:
@@ -98,7 +97,8 @@ if uploaded_sites:
                 sites_gdf = sites_gdf[sites_gdf['geometry'].notnull()]  # Remove rows with missing geometries
                 sites_gdf['geometry'] = sites_gdf['geometry'].apply(lambda geom: json.dumps(geom.__geo_interface__) if geom else None)
     
-                ### Applying geometry checks!
+                ### Applying geometry checks
+                
                 st.markdown("#### Data Quality Check Results")
     
                 def check_sites_within_country(country_gdf, sites_gdf):
@@ -110,7 +110,8 @@ if uploaded_sites:
                 country_check_result = check_sites_within_country(country_gdf, sites_gdf)
                 country_check_result['Unique?'] = ~country_check_result['geometry'].duplicated(keep=False)
     
-                    ### specific values for precision
+                ### Specific values for precision
+                
                 decimal_categories = {range(0, 4): "Too Low", 4: "OK", range(5, 1000): "High",}
                 def calculate_precision(value):
                     if pd.notnull(value):
@@ -127,14 +128,16 @@ if uploaded_sites:
                 country_check_result['Precision (Lat)'] = country_check_result['lat'].apply(calculate_precision)
                 country_check_result['Precision (Long)'] = country_check_result['lon'].apply(calculate_precision)
     
-        ### specific values for percentages
+        ### Specific values for percentages
+                
                 perc_within_country = round((country_check_result['Within Country?'].sum() / len(country_check_result['Within Country?'])) * 100, 2)
                 perc_unique = round((country_check_result['Unique?'].sum() / len(country_check_result['Unique?'])) * 100, 2)
                 perc_coordinates = round((country_check_result['Has Coordinates?'].sum() / len(country_check_result['Has Coordinates?'])) * 100, 2)
                 high_count = ((country_check_result['Precision (Lat)'] == 'High') & (country_check_result['Precision (Long)'] == 'High')).sum()
                 perc_precise = round(high_count / len(country_check_result['Name']) *100, 2)
         
-        ### outputs on tabs
+        ### Outputs on tabs
+                
                 tab1, tab2 = st.tabs(["Summary", "Full Results by Site"])
                 with tab1:
                         col1, col2, col3, col4 = st.columns(4)
@@ -159,6 +162,8 @@ if uploaded_sites:
                 with tab2:
                         st.write("##### Full results by site:")
                         st.dataframe(country_check_result[['Name', 'Has Coordinates?', 'Within Country?', 'Unique?', 'Precision (Lat)', 'Precision (Long)']])
+
+### Footer
 
 with st.expander("**How does this work?**"):
      st.write(f'''This webapp uses a series of automated processes to perform the following data quality checks on each site listed in the table:  
